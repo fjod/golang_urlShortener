@@ -8,14 +8,17 @@ import (
 
 type Url struct {
 	id  int64
-	url string
+	Url string
 }
 
 //go:generate mockery --name Operations
 type Operations interface {
+	// GetUrl Получить полный url по его ид
 	GetUrl(id int) (Url, error)
-	SetUrlId() (int, error)
-	SetUrl(string, int64) error
+	// GetUrlId Получить новый ид для записи
+	GetUrlId() (int, error)
+	// SetUrl Добавить новую запись в базу с полным url
+	SetUrl(string, int) error
 	CreateTable() error
 }
 
@@ -50,6 +53,7 @@ func (r *SQLiteRepository) CreateTable() error {
 	query := `
     CREATE TABLE IF NOT EXISTS urls(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        urlId INTEGER PRIMARY KEY AUTOINCREMENT,
         url TEXT NOT NULL        
     );`
 
@@ -57,15 +61,15 @@ func (r *SQLiteRepository) CreateTable() error {
 	return err
 }
 
-func (r *SQLiteRepository) SetUrlId() (int64, error) {
-	var rowId int64
+func (r *SQLiteRepository) GetUrlId() (int, error) {
+	var rowId int
 	query := `INSERT INTO urls(url) VALUES (?) returning id`
 	row := r.db.QueryRow(query, "")
 	err := row.Scan(&rowId)
 	return rowId, err
 }
 
-func (r *SQLiteRepository) SetUrl(url string, id int64) error {
+func (r *SQLiteRepository) SetUrl(url string, id int) error {
 	query := `update urls set url =? where id =?`
 	_, err := r.db.Exec(query, url, id)
 	return err
@@ -75,6 +79,6 @@ func (r *SQLiteRepository) GetUrl(id int) (Url, error) {
 	var url Url
 	query := `select url from urls where id =?`
 	row := r.db.QueryRow(query, id)
-	err := row.Scan(&url.url)
+	err := row.Scan(&url.Url)
 	return url, err
 }

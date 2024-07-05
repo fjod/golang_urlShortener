@@ -59,30 +59,12 @@ func (_m *Operations) GetUrl(id int) (db.Url, error) {
 	return r0, r1
 }
 
-// SetUrl provides a mock function with given fields: _a0, _a1
-func (_m *Operations) SetUrl(_a0 string, _a1 int64) error {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetUrl")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(string, int64) error); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// SetUrlId provides a mock function with given fields:
-func (_m *Operations) SetUrlId() (int, error) {
+// GetUrlId provides a mock function with given fields:
+func (_m *Operations) GetUrlId() (int, error) {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetUrlId")
+		panic("no return value specified for GetUrlId")
 	}
 
 	var r0 int
@@ -103,6 +85,24 @@ func (_m *Operations) SetUrlId() (int, error) {
 	}
 
 	return r0, r1
+}
+
+// SetUrl provides a mock function with given fields: _a0, _a1
+func (_m *Operations) SetUrl(_a0 string, _a1 int) error {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetUrl")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, int) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewOperations creates a new instance of Operations. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
