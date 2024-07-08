@@ -25,6 +25,7 @@ func TestGetShortUrl(t *testing.T) {
 		mockDB.AssertExpectations(t)
 	})
 
+	mockDB = M.NewOperations(t)
 	t.Run("error getting URL ID", func(t *testing.T) {
 		longUrl := "https://example.com/long/url"
 		expectedError := fmt.Errorf("failed to get URL ID")
@@ -38,6 +39,7 @@ func TestGetShortUrl(t *testing.T) {
 		mockDB.AssertExpectations(t)
 	})
 
+	mockDB = M.NewOperations(t)
 	t.Run("error setting URL", func(t *testing.T) {
 		longUrl := "https://example.com/long/url"
 		expectedError := fmt.Errorf("failed to set URL")
