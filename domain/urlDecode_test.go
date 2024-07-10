@@ -19,7 +19,7 @@ func TestGetLongUrl(t *testing.T) {
 
 		mockDB.On("GetUrl", 62).Return(DB.Url{Url: expectedLongUrl}, nil)
 
-		longUrl, err := GetLongUrl(shortUrl, mockDB)
+		longUrl, err := getLongUrl(shortUrl, mockDB)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedLongUrl, longUrl)
 
@@ -30,7 +30,7 @@ func TestGetLongUrl(t *testing.T) {
 	t.Run("error decoding short URL", func(t *testing.T) {
 		expectedError := fmt.Errorf("failed to get URL")
 		mockDB.On("GetUrl", 62).Return(DB.Url{Url: ""}, expectedError)
-		longUrl, err := GetLongUrl("ba", mockDB)
+		longUrl, err := getLongUrl("ba", mockDB)
 		assert.Empty(t, longUrl)
 		assert.Error(t, err)
 
@@ -44,7 +44,7 @@ func TestGetLongUrl(t *testing.T) {
 
 		mockDB.On("GetUrl", 62).Return(DB.Url{Url: ""}, expectedError)
 
-		longUrl, err := GetLongUrl(shortUrl, mockDB)
+		longUrl, err := getLongUrl(shortUrl, mockDB)
 		assert.Empty(t, longUrl)
 		assert.EqualError(t, err, expectedError.Error())
 

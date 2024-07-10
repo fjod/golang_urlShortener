@@ -5,14 +5,9 @@ import (
 	"time"
 )
 
-type Cache interface {
-	SetLifetime(lifetime time.Duration)
-	Exit(ctx context.Context)
-}
-
 type Kvp struct {
-	key   string
-	value string
+	Key   string
+	Value string
 }
 
 type Record struct {
@@ -32,8 +27,13 @@ type Service struct {
 	Add chan Kvp
 }
 
+var service *Service = nil
+
 func NewCacheService(lifetime time.Duration) *Service {
-	service := &Service{
+	if service != nil {
+		return service
+	}
+	s := &Service{
 		data:     make(map[string]Record),
 		lifetime: lifetime,
 		Key:      make(chan string),
@@ -41,25 +41,40 @@ func NewCacheService(lifetime time.Duration) *Service {
 		Add:      make(chan Kvp),
 	}
 	contChecking = true
-	go KeepRunning(service)
+	go KeepRunning(s)
+	service = s
 	return service
 }
 
 func KeepRunning(cache *Service) {
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	for contChecking {
 		select {
-		case values := <-(*cache).Add:
-			(*cache).data[values.key] = Record{
-				value: values.value,
+		case values, x := <-(*cache).Add:
+			if !x {
+				return
+			}
+			(*cache).data[values.Key] = Record{
+				value: values.Value,
 				added: time.Now(),
 			}
-		case k := <-(*cache).Key:
-			if value, ok := (*cache).data[k]; ok {
+		case k, x := <-(*cache).Key:
+			//After the last Value has been received from a closed channel c,
+			//any receive from c will succeed without blocking,
+			//returning the zero Value for the channel element.
+			if !x {
+				return
+			}
+			value, ok := (*cache).data[k]
+			if ok {
 				(*cache).Value <- value.value
 			}
+			if !ok {
+				(*cache).Value <- ""
+			}
 
-		default:
-			time.Sleep(time.Millisecond)
+		case <-ticker.C:
 			for key, record := range (*cache).data {
 				if !contChecking {
 					return
@@ -79,9 +94,13 @@ func (cache *Service) SetLifetime(lifetime time.Duration) {
 }
 
 func (cache *Service) Exit(ctx context.Context) {
-	contChecking = false
-	close(cache.Key)
-	close(cache.Value)
-	close(cache.Add)
-	ctx.Done()
+	select {
+	case <-ctx.Done():
+		panic(ctx.Err())
+	default:
+		contChecking = false
+		close(cache.Key)
+		close(cache.Value)
+		close(cache.Add)
+	}
 }
