@@ -11,8 +11,13 @@ import (
 var db = DB.NewService(DB.NewSQLiteRepository())
 
 func main() {
+	err := db.Storage.CreateTable()
+	if err != nil {
+		DB.NewSQLiteRepository()
+		return
+	}
 	router := createHttpServer()
-	err := router.Run("localhost:8080")
+	err = router.Run("localhost:8080")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -36,7 +41,7 @@ func createHttpServer() *gin.Engine {
 		c.Next()
 	})
 
-	router.GET("/get/:x", createShortLink)
+	router.POST("/create", createShortLink)
 	router.GET("/:x", redirect)
 	return router
 }
@@ -44,16 +49,29 @@ func createHttpServer() *gin.Engine {
 func redirect(c *gin.Context) {
 	x := c.Params[0].Value
 	url, err := D.GetLongUrl(x, db.Storage)
+	if url == "" {
+		c.JSON(http.StatusNotFound, gin.H{"err": "url not found"})
+		return
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return
 	}
+
 	c.Redirect(http.StatusFound, url)
 }
 
+type CreateShortLinkRequest struct {
+	Url string `json:"url"`
+}
+
 func createShortLink(c *gin.Context) {
-	x := c.Params[0].Value
-	url, err := D.GetShortUrl(x, db.Storage)
+	var json CreateShortLinkRequest
+	if err := c.ShouldBindJSON(&json); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	url, err := D.GetShortUrl(json.Url, db.Storage)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return
